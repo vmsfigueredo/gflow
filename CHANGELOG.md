@@ -35,3 +35,5 @@
 
 ### Changed
 - feat(main): `gflow tag list` now groups tags by major.minor, highlights latest tag
+- feat(main): `gflow tag list` rewritten as aligned table showing last 5 tags per module
+- fix(main): `install.sh` rewritten to download pre-built binary detecting OS/arch automatically

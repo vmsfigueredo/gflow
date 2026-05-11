@@ -5,9 +5,18 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/vmsfigueredo/gflow/internal/config"
 	"github.com/vmsfigueredo/gflow/internal/git"
+	"github.com/vmsfigueredo/gflow/internal/module"
 	"github.com/vmsfigueredo/gflow/internal/output"
 )
+
+const tagListLimit = 5
+
+type tagRow struct {
+	name string
+	tags []string
+}
 
 func newTagCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -24,67 +33,105 @@ func newTagCmd() *cobra.Command {
 func newTagListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List tags in the current repo",
+		Short: "List tags across all modules",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root := resolveRoot()
-			res, err := git.Run(cmd.Context(), root, "tag", "--sort=-version:refname")
+			cfg, err := config.Load(flagPath)
 			if err != nil {
 				return err
 			}
-			printTagList(strings.Fields(strings.TrimSpace(res.Stdout)))
+			mods, err := module.Resolve(cfg, flagPath, flagProject, flagNoRoot)
+			if err != nil {
+				return err
+			}
+
+			rows := make([]tagRow, 0, len(mods))
+			for _, m := range mods {
+				res, err := git.Run(cmd.Context(), m.Path, "tag", "--sort=-version:refname")
+				if err != nil {
+					output.Warnf("%s: %v", m.Name, err)
+					rows = append(rows, tagRow{name: m.Name, tags: nil})
+					continue
+				}
+				all := strings.Fields(strings.TrimSpace(res.Stdout))
+				if len(all) > tagListLimit {
+					all = all[:tagListLimit]
+				}
+				rows = append(rows, tagRow{name: m.Name, tags: all})
+			}
+
+			printTagTable(rows)
 			return nil
 		},
 	}
 }
 
-func printTagList(tags []string) {
-	if len(tags) == 0 {
-		output.Infof("No tags found.")
-		return
-	}
-
-	// group by vMAJOR.MINOR
-	type group struct {
-		key  string
-		tags []string
-	}
-	var groups []group
-	index := map[string]int{}
-
-	for _, t := range tags {
-		key := minorKey(t)
-		if i, ok := index[key]; ok {
-			groups[i].tags = append(groups[i].tags, t)
-		} else {
-			index[key] = len(groups)
-			groups = append(groups, group{key: key, tags: []string{t}})
+func printTagTable(rows []tagRow) {
+	// compute column widths: module name + up to tagListLimit tag columns
+	nameW := len("MODULE")
+	for _, r := range rows {
+		if len(r.name) > nameW {
+			nameW = len(r.name)
 		}
 	}
 
-	latest := tags[0]
-	fmt.Printf("\n  Latest  %s\n\n", output.HelpInlineCode(latest))
-
-	for _, g := range groups {
-		fmt.Printf("  %s\n", output.HelpInlineCode(g.key))
-		for _, t := range g.tags {
-			line := fmt.Sprintf("    %s", t)
-			if t == latest {
-				line += "  " + output.HelpUsage("← latest")
+	colW := make([]int, tagListLimit)
+	headers := []string{"LATEST", "TAG 2", "TAG 3", "TAG 4", "TAG 5"}
+	for i, h := range headers {
+		colW[i] = len(h)
+	}
+	for _, r := range rows {
+		for i, t := range r.tags {
+			w := len(t)
+			if i == 0 {
+				w += len(" (latest)")
 			}
-			fmt.Println(line)
+			if w > colW[i] {
+				colW[i] = w
+			}
 		}
-		fmt.Println()
 	}
+
+	sep := "  "
+
+	// header
+	fmt.Println()
+	line := output.HelpInlineCode(fmt.Sprintf("%-*s", nameW, "MODULE"))
+	for i, h := range headers {
+		line += sep + output.HelpUsage(fmt.Sprintf("%-*s", colW[i], h))
+	}
+	fmt.Println("  " + line)
+	fmt.Println("  " + strings.Repeat("─", nameW+2+sumInts(colW)+len(sep)*tagListLimit))
+
+	// rows
+	for _, r := range rows {
+		if r.tags == nil {
+			fmt.Printf("  %-*s  %s\n", nameW, r.name, output.HelpUsage("—"))
+			continue
+		}
+		cells := make([]string, tagListLimit)
+		for i := 0; i < tagListLimit; i++ {
+			if i < len(r.tags) {
+				t := r.tags[i]
+				if i == 0 {
+					cells[i] = fmt.Sprintf("%-*s", colW[i], t+" (latest)")
+				} else {
+					cells[i] = fmt.Sprintf("%-*s", colW[i], t)
+				}
+			} else {
+				cells[i] = fmt.Sprintf("%-*s", colW[i], "—")
+			}
+		}
+		fmt.Printf("  %-*s%s%s\n", nameW, r.name, sep, strings.Join(cells, sep))
+	}
+	fmt.Println()
 }
 
-// minorKey returns "vMAJOR.MINOR" for a semver tag, or the tag itself.
-func minorKey(tag string) string {
-	s := strings.TrimPrefix(tag, "v")
-	parts := strings.SplitN(s, ".", 3)
-	if len(parts) >= 2 {
-		return "v" + parts[0] + "." + parts[1]
+func sumInts(s []int) int {
+	total := 0
+	for _, v := range s {
+		total += v
 	}
-	return tag
+	return total
 }
 
 func newTagPushCmd() *cobra.Command {
