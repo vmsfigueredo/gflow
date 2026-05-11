@@ -29,7 +29,7 @@ func (g CleanTreeGuard) Check(ctx context.Context, m *module.Module) error {
 		return err
 	}
 	if dirty {
-		return fmt.Errorf("module %s has uncommitted changes (use --force to bypass or --stash to auto-stash)", m.Name)
+		return fmt.Errorf("module %s has uncommitted changes (use --force to bypass or --stash to auto-stash)", m.Display)
 	}
 	return nil
 }
@@ -45,7 +45,7 @@ func (g OnExpectedBranchGuard) Check(ctx context.Context, m *module.Module) erro
 		return err
 	}
 	if current != g.Expected {
-		return fmt.Errorf("module %s: expected branch %q, got %q", m.Name, g.Expected, current)
+		return fmt.Errorf("module %s: expected branch %q, got %q", m.Display, g.Expected, current)
 	}
 	return nil
 }
@@ -63,7 +63,7 @@ func (g RemoteSyncGuard) Check(ctx context.Context, m *module.Module) error {
 	}
 	if !synced {
 		return fmt.Errorf("module %s: branch %q is not synced with %s/%s — pull first",
-			m.Name, g.Branch, g.Remote, g.Branch)
+			m.Display, g.Branch, g.Remote, g.Branch)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ type SemverGuard struct {
 
 func (g SemverGuard) Check(_ context.Context, m *module.Module) error {
 	if _, err := semver.NewVersion(g.Name); err != nil {
-		return fmt.Errorf("module %s: %q is not a valid semver version", m.Name, g.Name)
+		return fmt.Errorf("module %s: %q is not a valid semver version", m.Display, g.Name)
 	}
 	return nil
 }

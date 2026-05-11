@@ -48,12 +48,12 @@ func newWorktreeAddCmd() *cobra.Command {
 				if dest == "" {
 					dest = m.Path + "-" + branch
 				}
-				output.Infof("[%s] worktree add %s → %s", m.Name, branch, dest)
+				output.Infof("[%s] worktree add %s → %s", m.Display, branch, dest)
 				if flagDryRun {
 					continue
 				}
 				if err := git.WorktreeAdd(cmd.Context(), m.Path, dest, branch); err != nil {
-					output.Errorf("[%s] %v", m.Name, err)
+					output.Errorf("[%s] %v", m.Display, err)
 				}
 			}
 			return nil
@@ -81,7 +81,7 @@ func newWorktreeListCmd() *cobra.Command {
 			for _, m := range mods {
 				entries, err := git.WorktreeList(cmd.Context(), m.Path)
 				if err != nil {
-					output.Warnf("[%s] %v", m.Name, err)
+					output.Warnf("[%s] %v", m.Display, err)
 					continue
 				}
 				for _, e := range entries {
@@ -89,7 +89,7 @@ func newWorktreeListCmd() *cobra.Command {
 					if branch == "" {
 						branch = "(detached)"
 					}
-					fmt.Printf("%-20s %-30s %s\n", m.Name, branch, e.Path)
+					fmt.Printf("%-20s %-30s %s\n", m.Display, branch, e.Path)
 				}
 			}
 			return nil

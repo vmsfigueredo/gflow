@@ -80,3 +80,55 @@ func names(mods []*Module) []string {
 	}
 	return out
 }
+
+func displays(mods []*Module) []string {
+	out := make([]string, len(mods))
+	for i, m := range mods {
+		out[i] = m.Display
+	}
+	return out
+}
+
+func TestDisplayDuplicateLeaf(t *testing.T) {
+	dir := t.TempDir()
+	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, nil), dir, nil, true)
+	require.NoError(t, err)
+
+	d := displays(mods)
+	assert.Equal(t, []string{"hagape/api", "central/api"}, d)
+}
+
+func TestDisplaySinglePathAlias(t *testing.T) {
+	dir := t.TempDir()
+	aliases := map[string][]string{"backend": {"hagape/api"}}
+	mods, err := Resolve(cfg([]string{"hagape/api"}, aliases), dir, nil, true)
+	require.NoError(t, err)
+
+	assert.Equal(t, "backend", mods[0].Display)
+}
+
+func TestDisplayMultiPathAliasNoOverride(t *testing.T) {
+	dir := t.TempDir()
+	aliases := map[string][]string{"all": {"hagape/api", "central/api"}}
+	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, aliases), dir, nil, true)
+	require.NoError(t, err)
+
+	d := displays(mods)
+	assert.Equal(t, []string{"hagape/api", "central/api"}, d)
+}
+
+func TestDisplayTopLevelSubmodule(t *testing.T) {
+	dir := t.TempDir()
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true)
+	require.NoError(t, err)
+
+	assert.Equal(t, "api", mods[0].Display)
+}
+
+func TestDisplayRoot(t *testing.T) {
+	dir := t.TempDir()
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, false)
+	require.NoError(t, err)
+
+	assert.Equal(t, ".", mods[0].Display)
+}

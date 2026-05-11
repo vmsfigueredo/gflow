@@ -48,15 +48,15 @@ func newTagListCmd() *cobra.Command {
 			for _, m := range mods {
 				res, err := git.Run(cmd.Context(), m.Path, "tag", "--sort=-version:refname")
 				if err != nil {
-					output.Warnf("%s: %v", m.Name, err)
-					rows = append(rows, tagRow{name: m.Name, tags: nil})
+					output.Warnf("%s: %v", m.Display, err)
+					rows = append(rows, tagRow{name: m.Display, tags: nil})
 					continue
 				}
 				all := strings.Fields(strings.TrimSpace(res.Stdout))
 				if len(all) > tagListLimit {
 					all = all[:tagListLimit]
 				}
-				rows = append(rows, tagRow{name: m.Name, tags: all})
+				rows = append(rows, tagRow{name: m.Display, tags: all})
 			}
 
 			printTagTable(rows)

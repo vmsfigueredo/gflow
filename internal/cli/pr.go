@@ -53,15 +53,15 @@ func newPRCreateCmd() *cobra.Command {
 			ctx := cmd.Context()
 			for _, m := range mods {
 				if flagDryRun {
-					output.Infof("[%s] [dry-run] gh pr create --base %s", m.Name, base)
+					output.Infof("[%s] [dry-run] gh pr create --base %s", m.Display, base)
 					continue
 				}
 				info, err := gh.PRCreate(ctx, m.Path, title, body, base, draft)
 				if err != nil {
-					output.Errorf("[%s] %v", m.Name, err)
+					output.Errorf("[%s] %v", m.Display, err)
 					continue
 				}
-				output.Successf("[%s] PR #%d: %s", m.Name, info.Number, info.URL)
+				output.Successf("[%s] PR #%d: %s", m.Display, info.Number, info.URL)
 			}
 			return nil
 		},
@@ -97,10 +97,10 @@ func newPRStatusCmd() *cobra.Command {
 			for _, m := range mods {
 				info, err := gh.PRStatus(ctx, m.Path)
 				if err != nil {
-					fmt.Fprintf(w, "%s\t-\t-\t-\t%v\n", m.Name, err)
+					fmt.Fprintf(w, "%s\t-\t-\t-\t%v\n", m.Display, err)
 					continue
 				}
-				fmt.Fprintf(w, "%s\t#%d\t%s\t%s\t%s\n", m.Name, info.Number, info.State, info.Mergeable, info.URL)
+				fmt.Fprintf(w, "%s\t#%d\t%s\t%s\t%s\n", m.Display, info.Number, info.State, info.Mergeable, info.URL)
 			}
 			return w.Flush()
 		},
@@ -129,14 +129,14 @@ func newPRMergeCmd() *cobra.Command {
 			ctx := cmd.Context()
 			for _, m := range mods {
 				if flagDryRun {
-					output.Infof("[%s] [dry-run] gh pr merge --%s --auto", m.Name, strategy)
+					output.Infof("[%s] [dry-run] gh pr merge --%s --auto", m.Display, strategy)
 					continue
 				}
 				if err := gh.PRMerge(ctx, m.Path, strategy); err != nil {
-					output.Errorf("[%s] %v", m.Name, err)
+					output.Errorf("[%s] %v", m.Display, err)
 					continue
 				}
-				output.Successf("[%s] merge queued.", m.Name)
+				output.Successf("[%s] merge queued.", m.Display)
 			}
 			return nil
 		},

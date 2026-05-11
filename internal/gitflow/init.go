@@ -39,14 +39,14 @@ func initModule(ctx context.Context, cfg *config.Config, m *module.Module, dryRu
 	out, err := runGitFlow(ctx, m.Path, args...)
 	if err != nil {
 		return executor.Result{Module: m, Action: "init", Status: executor.StatusError,
-			Err: fmt.Errorf("git flow init in %s: %w", m.Name, err)}
+			Err: fmt.Errorf("git flow init in %s: %w", m.Display, err)}
 	}
 
 	// submodule init/update for the root module
 	if m.Root {
 		if err := git.UpdateInit(ctx, m.Path); err != nil {
 			return executor.Result{Module: m, Action: "init", Status: executor.StatusError,
-				Err: fmt.Errorf("submodule update in %s: %w", m.Name, err)}
+				Err: fmt.Errorf("submodule update in %s: %w", m.Display, err)}
 		}
 	}
 

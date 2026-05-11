@@ -55,9 +55,11 @@ func Resolve(cfg *config.Config, root string, projects []string, noRoot bool) ([
 	var mods []*Module
 	noRootEffective := noRoot || cfg.NoRoot
 
+	aliasIdx := buildAliasIndex(cfg.Aliases)
+
 	// include root unless excluded
 	if !noRootEffective {
-		mods = append(mods, &Module{Name: ".", Path: root, Root: true})
+		mods = append(mods, &Module{Name: ".", Display: ".", Path: root, Root: true})
 	}
 
 	for _, p := range paths {
@@ -66,10 +68,35 @@ func Resolve(cfg *config.Config, root string, projects []string, noRoot bool) ([
 			abs = filepath.Join(root, p)
 		}
 		name := filepath.Base(p)
-		mods = append(mods, &Module{Name: name, Path: abs})
+		mods = append(mods, &Module{Name: name, Display: displayFor(p, aliasIdx), Path: abs})
 	}
 
 	return mods, nil
+}
+
+// buildAliasIndex builds a path→alias reverse map. Only paths that are the
+// sole entry in a single-element alias list are eligible (avoids ambiguity
+// when an alias groups multiple paths).
+func buildAliasIndex(aliases map[string][]string) map[string]string {
+	idx := map[string]string{}
+	for alias, paths := range aliases {
+		if len(paths) == 1 {
+			idx[paths[0]] = alias
+		}
+	}
+	return idx
+}
+
+// displayFor returns the human-facing label for a submodule path.
+func displayFor(p string, aliasIdx map[string]string) string {
+	if a, ok := aliasIdx[p]; ok {
+		return a
+	}
+	dir := filepath.Dir(p)
+	if dir == "." || dir == "" || dir == "/" {
+		return filepath.Base(p)
+	}
+	return filepath.Base(dir) + "/" + filepath.Base(p)
 }
 
 // fromGitmodules parses .gitmodules for submodule paths.

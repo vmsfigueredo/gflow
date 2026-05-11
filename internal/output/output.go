@@ -107,7 +107,7 @@ func Print(results []executor.Result, asJSON bool) error {
 	// Column width = longest module name.
 	maxLen := 0
 	for _, r := range results {
-		if n := len(r.Module.Name); n > maxLen {
+		if n := len(r.Module.Display); n > maxLen {
 			maxLen = n
 		}
 	}
@@ -136,7 +136,7 @@ func Print(results []executor.Result, asJSON bool) error {
 }
 
 func printResult(r executor.Result, nameWidth int) {
-	name := fmt.Sprintf("%-*s", nameWidth, r.Module.Name)
+	name := fmt.Sprintf("%-*s", nameWidth, r.Module.Display)
 	dur := fmtDur(r.Duration)
 
 	switch r.Status {
@@ -209,6 +209,7 @@ func fmtDur(d time.Duration) string {
 
 type jsonResult struct {
 	Module   string `json:"module"`
+	Display  string `json:"display"`
 	Action   string `json:"action"`
 	Status   string `json:"status"`
 	Output   string `json:"output,omitempty"`
@@ -221,6 +222,7 @@ func printJSON(results []executor.Result) error {
 	for i, r := range results {
 		jr := jsonResult{
 			Module:   r.Module.Name,
+			Display:  r.Module.Display,
 			Action:   r.Action,
 			Status:   string(r.Status),
 			Output:   r.Output,
@@ -246,7 +248,7 @@ func PrintList(mods []*module.Module, asJSON bool) error {
 		}
 		rows := make([]row, len(mods))
 		for i, m := range mods {
-			rows[i] = row{Name: m.Name, Path: m.Path, Root: m.Root}
+			rows[i] = row{Name: m.Display, Path: m.Path, Root: m.Root}
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -257,7 +259,7 @@ func PrintList(mods []*module.Module, asJSON bool) error {
 		if m.Root {
 			tag = colorDim("  (root)")
 		}
-		fmt.Printf("  %s%s\n", colorBold(m.Name), tag)
+		fmt.Printf("  %s%s\n", colorBold(m.Display), tag)
 	}
 	return nil
 }

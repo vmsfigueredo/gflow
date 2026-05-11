@@ -69,9 +69,9 @@ func PickModules(mods []*module.Module, hints map[string]string) ([]*module.Modu
 	opts := make([]huh.Option[string], len(mods))
 	selected := make([]string, len(mods))
 	for i, m := range mods {
-		label := m.Name
+		label := m.Display
 		if b, ok := hints[m.Name]; ok && b != "" {
-			label = fmt.Sprintf("%-20s  (%s)", m.Name, b)
+			label = fmt.Sprintf("%-20s  (%s)", m.Display, b)
 		}
 		opts[i] = huh.NewOption(label, m.Name)
 		selected[i] = m.Name
@@ -125,7 +125,7 @@ func AskPerModuleName(branchType string, mods []*module.Module, defaults map[str
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
-					Title(fmt.Sprintf("%s name for [%s]:", branchType, m.Name)).
+					Title(fmt.Sprintf("%s name for [%s]:", branchType, m.Display)).
 					Description("Leave empty to skip this module.").
 					Placeholder(def).
 					Value(&name),
