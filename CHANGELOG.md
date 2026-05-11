@@ -6,6 +6,7 @@
 - feat(main): `gflow update` command with auto-detect install source (homebrew vs binary), GitHub Releases check, SHA256 verification, atomic replace
 - feat(main): `--verbose / -v` flag streaming raw git output to stderr
 - feat(main): goreleaser config with changelog, checksum sha256, windows/arm64 ignore, homebrew_casks
+- chore(main): ignore root `gflow` binary artifact in .gitignore
 
 ### Changed
 - chore(main): `.goreleaser.yaml` migrated deprecated `format`/`brews` fields to `formats`/`homebrew_casks`
