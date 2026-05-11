@@ -7,6 +7,7 @@
 - feat(main): `--verbose / -v` flag streaming raw git output to stderr
 - feat(main): goreleaser config with changelog, checksum sha256, windows/arm64 ignore, homebrew_casks
 - chore(main): ignore root `gflow` binary artifact in .gitignore
+- chore(main): remove homebrew_casks from goreleaser until tap repo exists
 
 ### Changed
 - chore(main): `.goreleaser.yaml` migrated deprecated `format`/`brews` fields to `formats`/`homebrew_casks`

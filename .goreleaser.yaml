@@ -40,13 +40,6 @@ changelog:
       - Merge pull request
       - Merge branch
 
-homebrew_casks:
-  - repository:
-      owner: vmsfigueredo
-      name: homebrew-tap
-    homepage: https://github.com/vmsfigueredo/gflow
-    description: "Git Flow orchestrator for modular/submodule repositories"
-    license: MIT
 
 release:
   github:
