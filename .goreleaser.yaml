@@ -1,0 +1,36 @@
+version: 2
+
+builds:
+  - main: ./cmd/gflow
+    binary: gflow
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+brews:
+  - repository:
+      owner: vmsfigueredo
+      name: homebrew-tap
+    homepage: https://github.com/vmsfigueredo/gflow
+    description: "Git Flow orchestrator for modular/submodule repositories"
+    license: MIT
+    install: bin.install "gflow"
+    test: |
+      system "#{bin}/gflow", "version"
+
+release:
+  github:
+    owner: vmsfigueredo
+    name: gflow
