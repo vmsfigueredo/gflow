@@ -13,7 +13,8 @@ import (
 // Priority: explicit MODULES list in config > .gitmodules discovery.
 // --project/-P resolves an alias and limits to matching paths (repeatable, union).
 // --no-root excludes the superproject root. Root is also excluded when -P is used.
-func Resolve(cfg *config.Config, root string, projects []string, noRoot bool) ([]*Module, error) {
+// --except/-E excludes named modules (by Name or Display) from the final list.
+func Resolve(cfg *config.Config, root string, projects []string, noRoot bool, except []string) ([]*Module, error) {
 	if root == "" {
 		var err error
 		root, err = os.Getwd()
@@ -69,6 +70,20 @@ func Resolve(cfg *config.Config, root string, projects []string, noRoot bool) ([
 		}
 		name := filepath.Base(p)
 		mods = append(mods, &Module{Name: name, Display: displayFor(p, aliasIdx), Path: abs})
+	}
+
+	if len(except) > 0 {
+		excluded := make(map[string]bool, len(except))
+		for _, e := range except {
+			excluded[e] = true
+		}
+		filtered := mods[:0]
+		for _, m := range mods {
+			if !excluded[m.Name] && !excluded[m.Display] {
+				filtered = append(filtered, m)
+			}
+		}
+		mods = filtered
 	}
 
 	return mods, nil

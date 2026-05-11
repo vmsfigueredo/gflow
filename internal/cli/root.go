@@ -17,6 +17,7 @@ var (
 	flagProject         []string
 	flagRemote          string
 	flagNoRoot          bool
+	flagExcept          []string
 	flagParallel        bool
 	flagDryRun          bool
 	flagDebug           bool
@@ -50,6 +51,7 @@ func newRootCmd(version string) *cobra.Command {
 	root.PersistentFlags().StringArrayVarP(&flagProject, "project", "P", nil, "resolve alias and use matching modules (repeatable)")
 	root.PersistentFlags().StringVarP(&flagRemote, "remote", "R", "origin", "git remote name")
 	root.PersistentFlags().BoolVar(&flagNoRoot, "no-root", false, "exclude root module from operations")
+	root.PersistentFlags().StringArrayVarP(&flagExcept, "except", "E", nil, "exclude module by name (repeatable)")
 	root.PersistentFlags().BoolVar(&flagParallel, "parallel", false, "run operations in parallel across modules")
 	root.PersistentFlags().BoolVar(&flagDryRun, "dry-run", false, "print commands without executing")
 	root.PersistentFlags().BoolVar(&flagDebug, "debug", false, "enable debug output")

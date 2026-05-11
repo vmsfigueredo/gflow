@@ -31,7 +31,7 @@ func newCommitCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, flagPath, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, flagPath, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}

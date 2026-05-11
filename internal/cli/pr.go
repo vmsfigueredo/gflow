@@ -45,7 +45,7 @@ func newPRCreateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}
@@ -86,7 +86,7 @@ func newPRStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}
@@ -121,7 +121,7 @@ func newPRMergeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}

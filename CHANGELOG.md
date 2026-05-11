@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- feat(main): `--except/-E` flag to exclude modules by name from any operation
+
 ## [1.0.6] - 2026-05-11
 
 ### Added

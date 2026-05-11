@@ -20,7 +20,7 @@ func TestResolveExplicitModules(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "api"), 0o755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "web"), 0o755))
 
-	mods, err := Resolve(cfg([]string{"api", "web"}, nil), dir, nil, false)
+	mods, err := Resolve(cfg([]string{"api", "web"}, nil), dir, nil, false, nil)
 	require.NoError(t, err)
 
 	names := names(mods)
@@ -29,7 +29,7 @@ func TestResolveExplicitModules(t *testing.T) {
 
 func TestResolveNoRoot(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true)
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true, nil)
 	require.NoError(t, err)
 	assert.NotContains(t, names(mods), ".")
 }
@@ -37,7 +37,7 @@ func TestResolveNoRoot(t *testing.T) {
 func TestResolveProjectAlias(t *testing.T) {
 	dir := t.TempDir()
 	aliases := map[string][]string{"backend": {"api", "services/auth"}}
-	mods, err := Resolve(cfg([]string{"api", "web", "services/auth"}, aliases), dir, []string{"backend"}, false)
+	mods, err := Resolve(cfg([]string{"api", "web", "services/auth"}, aliases), dir, []string{"backend"}, false, nil)
 	require.NoError(t, err)
 
 	n := names(mods)
@@ -57,7 +57,7 @@ func TestResolveFromGitmodules(t *testing.T) {
 `
 	require.NoError(t, os.WriteFile(filepath.Join(dir, ".gitmodules"), []byte(gitmodules), 0o644))
 
-	mods, err := Resolve(cfg(nil, nil), dir, nil, false)
+	mods, err := Resolve(cfg(nil, nil), dir, nil, false, nil)
 	require.NoError(t, err)
 
 	n := names(mods)
@@ -67,7 +67,7 @@ func TestResolveFromGitmodules(t *testing.T) {
 
 func TestResolveNoConfigNoGitmodules(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg(nil, nil), dir, nil, false)
+	mods, err := Resolve(cfg(nil, nil), dir, nil, false, nil)
 	require.NoError(t, err)
 	// only root
 	assert.Equal(t, []string{"."}, names(mods))
@@ -91,7 +91,7 @@ func displays(mods []*Module) []string {
 
 func TestDisplayDuplicateLeaf(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, nil), dir, nil, true)
+	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, nil), dir, nil, true, nil)
 	require.NoError(t, err)
 
 	d := displays(mods)
@@ -101,7 +101,7 @@ func TestDisplayDuplicateLeaf(t *testing.T) {
 func TestDisplaySinglePathAlias(t *testing.T) {
 	dir := t.TempDir()
 	aliases := map[string][]string{"backend": {"hagape/api"}}
-	mods, err := Resolve(cfg([]string{"hagape/api"}, aliases), dir, nil, true)
+	mods, err := Resolve(cfg([]string{"hagape/api"}, aliases), dir, nil, true, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, "backend", mods[0].Display)
@@ -110,7 +110,7 @@ func TestDisplaySinglePathAlias(t *testing.T) {
 func TestDisplayMultiPathAliasNoOverride(t *testing.T) {
 	dir := t.TempDir()
 	aliases := map[string][]string{"all": {"hagape/api", "central/api"}}
-	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, aliases), dir, nil, true)
+	mods, err := Resolve(cfg([]string{"hagape/api", "central/api"}, aliases), dir, nil, true, nil)
 	require.NoError(t, err)
 
 	d := displays(mods)
@@ -119,7 +119,7 @@ func TestDisplayMultiPathAliasNoOverride(t *testing.T) {
 
 func TestDisplayTopLevelSubmodule(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true)
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, "api", mods[0].Display)
@@ -127,7 +127,7 @@ func TestDisplayTopLevelSubmodule(t *testing.T) {
 
 func TestDisplayRoot(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, false)
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, false, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, ".", mods[0].Display)

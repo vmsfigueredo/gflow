@@ -38,7 +38,7 @@ func newWorktreeAddCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,7 @@ func newWorktreeListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot)
+			mods, err := module.Resolve(cfg, root, flagProject, flagNoRoot, flagExcept)
 			if err != nil {
 				return err
 			}
