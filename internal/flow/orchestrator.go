@@ -85,6 +85,22 @@ func Run(ctx context.Context, cfg *config.Config, mods []*module.Module, opts Op
 			}
 		}
 
+		// hotfix start: auto-stash dirty tree, sync main and develop before branching
+		if opts.BranchType == "hotfix" && opts.Op == "start" && !opts.DryRun {
+			dirty, _ := git.IsDirty(ctx, m.Path)
+			if dirty && !stashed {
+				if _, err := git.Run(ctx, m.Path, "stash", "push", "-m", "gflow-hotfix-auto-stash"); err == nil {
+					stashed = true
+				}
+			}
+			mainBranch, _ := git.DetectMainBranch(ctx, m.Path, opts.Remote)
+			_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
+			_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, mainBranch)
+			_, _ = git.Run(ctx, m.Path, "checkout", "develop")
+			_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, "develop")
+			_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
+		}
+
 		out, err := gitflow.RunOpFn(ctx, variant, cfg, m, opts.BranchType, opts.Op, name, opts.DryRun)
 
 		if stashed {
@@ -124,8 +140,7 @@ func buildGuardsWithName(cfg *config.Config, m *module.Module, opts Options, nam
 		switch opts.BranchType {
 		case "feature", "bugfix", "release":
 			guards = append(guards, OnExpectedBranchGuard{Expected: "develop"})
-		case "hotfix":
-			guards = append(guards, onExpectedMainBranch(cfg, m, opts.Remote))
+		// hotfix: no branch guard — orchestrator handles checkout+pull automatically
 		}
 	}
 

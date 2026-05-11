@@ -4,10 +4,12 @@
 
 ### Added
 - feat(main): `Module.Display` field — alias or `parent/dir` label shown in all command output
+- feat(main): hotfix start auto-syncs main and develop branches before branching
 
 ### Changed
 - feat(main): all human-facing render sites use `m.Display` instead of `m.Name` (status, list, pr, tag, worktree, prompts, error messages)
 - feat(main): JSON output gains `"display"` field alongside existing `"module"` identifier for backwards-compat
+- feat(main): hotfix start removes OnExpectedBranchGuard — orchestrator handles checkout+pull automatically
 
 
 - feat(main): `gflow update` command with auto-detect install source (homebrew vs binary), GitHub Releases check, SHA256 verification, atomic replace
