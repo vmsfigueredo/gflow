@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- docs(main): add README.md with install instructions, quick start, and command reference
 - feat(main): `Module.Display` field — alias or `parent/dir` label shown in all command output
 - feat(main): hotfix start auto-syncs main and develop branches before branching
 
