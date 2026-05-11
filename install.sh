@@ -35,4 +35,4 @@ curl -fsSL "$URL" | tar xz -C /tmp
 install -m755 "/tmp/${BINARY}" "${INSTALL_DIR}/${BINARY}"
 rm -f "/tmp/${BINARY}"
 
-echo "Installed: $(${INSTALL_DIR}/${BINARY} --version)"
+echo "Installed: $(${INSTALL_DIR}/${BINARY} version)"
