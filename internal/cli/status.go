@@ -10,9 +10,10 @@ import (
 )
 
 func newStatusCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Show git status for all modules",
+		Long:  helpStatus,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flagPath)
 			if err != nil {
@@ -22,6 +23,18 @@ func newStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			iFlag, _ := cmd.Flags().GetBool("interactive")
+			if iFlag {
+				picked, err := pickInteractive(cmd.Context(), mods)
+				if err != nil {
+					return err
+				}
+				if picked != nil {
+					mods = picked
+				}
+			}
+
 			output.PrintHeader("status", "", len(mods), output.HeaderFlags{
 				Parallel: flagParallel || cfg.Parallel,
 				DryRun:   flagDryRun,
@@ -33,4 +46,6 @@ func newStatusCmd() *cobra.Command {
 			return output.Print(results, flagJSON)
 		},
 	}
+	cmd.Flags().BoolP("interactive", "i", false, "pick modules interactively before running")
+	return cmd
 }

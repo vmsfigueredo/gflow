@@ -11,9 +11,9 @@ import (
 
 // Resolve returns the ordered list of modules to operate on.
 // Priority: explicit MODULES list in config > .gitmodules discovery.
-// --project/-P resolves an alias and limits to matching paths.
-// --no-root excludes the superproject root.
-func Resolve(cfg *config.Config, root, project string, noRoot bool) ([]*Module, error) {
+// --project/-P resolves an alias and limits to matching paths (repeatable, union).
+// --no-root excludes the superproject root. Root is also excluded when -P is used.
+func Resolve(cfg *config.Config, root string, projects []string, noRoot bool) ([]*Module, error) {
 	if root == "" {
 		var err error
 		root, err = os.Getwd()
@@ -24,12 +24,23 @@ func Resolve(cfg *config.Config, root, project string, noRoot bool) ([]*Module, 
 
 	var paths []string
 
-	if project != "" {
-		if alias, ok := cfg.Aliases[project]; ok {
-			paths = alias
-		} else {
-			paths = []string{project}
+	if len(projects) > 0 {
+		seen := map[string]bool{}
+		for _, project := range projects {
+			var resolved []string
+			if alias, ok := cfg.Aliases[project]; ok {
+				resolved = alias
+			} else {
+				resolved = []string{project}
+			}
+			for _, p := range resolved {
+				if !seen[p] {
+					seen[p] = true
+					paths = append(paths, p)
+				}
+			}
 		}
+		noRoot = true
 	} else if len(cfg.Modules) > 0 {
 		paths = cfg.Modules
 	} else {

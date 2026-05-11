@@ -20,7 +20,7 @@ func TestResolveExplicitModules(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "api"), 0o755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dir, "web"), 0o755))
 
-	mods, err := Resolve(cfg([]string{"api", "web"}, nil), dir, "", false)
+	mods, err := Resolve(cfg([]string{"api", "web"}, nil), dir, nil, false)
 	require.NoError(t, err)
 
 	names := names(mods)
@@ -29,7 +29,7 @@ func TestResolveExplicitModules(t *testing.T) {
 
 func TestResolveNoRoot(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg([]string{"api"}, nil), dir, "", true)
+	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, true)
 	require.NoError(t, err)
 	assert.NotContains(t, names(mods), ".")
 }
@@ -37,7 +37,7 @@ func TestResolveNoRoot(t *testing.T) {
 func TestResolveProjectAlias(t *testing.T) {
 	dir := t.TempDir()
 	aliases := map[string][]string{"backend": {"api", "services/auth"}}
-	mods, err := Resolve(cfg([]string{"api", "web", "services/auth"}, aliases), dir, "backend", false)
+	mods, err := Resolve(cfg([]string{"api", "web", "services/auth"}, aliases), dir, []string{"backend"}, false)
 	require.NoError(t, err)
 
 	n := names(mods)
@@ -57,7 +57,7 @@ func TestResolveFromGitmodules(t *testing.T) {
 `
 	require.NoError(t, os.WriteFile(filepath.Join(dir, ".gitmodules"), []byte(gitmodules), 0o644))
 
-	mods, err := Resolve(cfg(nil, nil), dir, "", false)
+	mods, err := Resolve(cfg(nil, nil), dir, nil, false)
 	require.NoError(t, err)
 
 	n := names(mods)
@@ -67,7 +67,7 @@ func TestResolveFromGitmodules(t *testing.T) {
 
 func TestResolveNoConfigNoGitmodules(t *testing.T) {
 	dir := t.TempDir()
-	mods, err := Resolve(cfg(nil, nil), dir, "", false)
+	mods, err := Resolve(cfg(nil, nil), dir, nil, false)
 	require.NoError(t, err)
 	// only root
 	assert.Equal(t, []string{"."}, names(mods))

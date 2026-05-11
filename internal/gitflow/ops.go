@@ -8,6 +8,10 @@ import (
 	"github.com/vmsfigueredo/gflow/internal/module"
 )
 
+// RunOpFn is the function used to execute a git-flow operation.
+// Overridable in tests.
+var RunOpFn = RunOp
+
 // RunOp dispatches a git-flow operation for one module.
 // Passes real FinishOptions from config on finish.
 func RunOp(ctx context.Context, variant Variant, cfg *config.Config, m *module.Module,

@@ -365,6 +365,26 @@ func HelpFlagsSection(cmd *cobra.Command) string {
 	return sb.String()
 }
 
+// Infof prints an informational message to stdout.
+func Infof(format string, args ...interface{}) {
+	fmt.Printf("  "+format+"\n", args...)
+}
+
+// Successf prints a success message to stdout.
+func Successf(format string, args ...interface{}) {
+	fmt.Printf("  %s "+format+"\n", append([]interface{}{colorOK(sym.ok)}, args...)...)
+}
+
+// Warnf prints a warning message to stdout.
+func Warnf(format string, args ...interface{}) {
+	fmt.Printf("  %s "+format+"\n", append([]interface{}{colorWarn("!")}, args...)...)
+}
+
+// Errorf prints an error message to stderr.
+func Errorf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, "  %s "+format+"\n", append([]interface{}{colorFail(sym.fail)}, args...)...)
+}
+
 // DoctorSummary prints the footer after all doctor checks.
 func DoctorSummary(passed, failed int) {
 	parts := []string{}

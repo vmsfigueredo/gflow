@@ -72,17 +72,37 @@ func loadYAML(path string, cfg *Config) error {
 //	KEY=value
 //	KEY="value"
 //	KEY=(a b c)
+//	KEY=(          <- multi-line array
+//	    "a" "b"
+//	)
 //	add_path_alias "key" "paths"
 //
 // No eval, no subshell. Unsupported shapes are flagged with a clear error.
 var (
-	reSimple  = regexp.MustCompile(`^([A-Z_]+)=([^("$].*)$`)
-	reQuoted = regexp.MustCompile(`^([A-Z_]+)="(.*)"$`)
-	reArray  = regexp.MustCompile(`^([A-Z_]+)=\(([^)]*)\)$`)
-	reAlias  = regexp.MustCompile(`^add_path_alias\s+"([^"]+)"\s+"([^"]+)"$`)
-	reComment = regexp.MustCompile(`^\s*#`)
-	reBlank   = regexp.MustCompile(`^\s*$`)
+	reSimple      = regexp.MustCompile(`^([A-Z_]+)=([^("$].*)$`)
+	reQuoted      = regexp.MustCompile(`^([A-Z_]+)="(.*)"$`)
+	reArray       = regexp.MustCompile(`^([A-Z_]+)=\(([^)]*)\)$`)
+	reArrayOpen   = regexp.MustCompile(`^([A-Z_]+)=\(\s*$`)
+	reAlias       = regexp.MustCompile(`^add_path_alias\s+"([^"]+)"\s+"([^"]+)"$`)
+	reComment     = regexp.MustCompile(`^\s*#`)
+	reBlank       = regexp.MustCompile(`^\s*$`)
+	reArrayClose  = regexp.MustCompile(`^\s*\)\s*$`)
 )
+
+// unquoteBashWords splits space-separated words and strips surrounding double-quotes.
+func unquoteBashWords(s string) []string {
+	raw := strings.Fields(s)
+	out := make([]string, 0, len(raw))
+	for _, w := range raw {
+		if len(w) >= 2 && w[0] == '"' && w[len(w)-1] == '"' {
+			w = w[1 : len(w)-1]
+		}
+		if w != "" {
+			out = append(out, w)
+		}
+	}
+	return out
+}
 
 func loadBash(path string, cfg *Config) error {
 	f, err := os.Open(path)
@@ -97,9 +117,26 @@ func loadBash(path string, cfg *Config) error {
 
 	scanner := bufio.NewScanner(f)
 	lineNo := 0
+
+	// multi-line array accumulator
+	var arrayKey string
+	var arrayVals []string
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNo++
+
+		// inside multi-line array
+		if arrayKey != "" {
+			if reArrayClose.MatchString(line) {
+				applyBashVar(cfg, arrayKey, arrayVals)
+				arrayKey = ""
+				arrayVals = nil
+			} else if !reComment.MatchString(line) && !reBlank.MatchString(line) {
+				arrayVals = append(arrayVals, unquoteBashWords(line)...)
+			}
+			continue
+		}
 
 		if reComment.MatchString(line) || reBlank.MatchString(line) {
 			continue
@@ -108,12 +145,17 @@ func loadBash(path string, cfg *Config) error {
 		switch {
 		case reAlias.MatchString(line):
 			m := reAlias.FindStringSubmatch(line)
-			key, paths := m[1], strings.Fields(m[2])
+			key, paths := strings.TrimSpace(m[1]), strings.Fields(m[2])
 			cfg.Aliases[key] = append(cfg.Aliases[key], paths...)
+
+		case reArrayOpen.MatchString(line):
+			m := reArrayOpen.FindStringSubmatch(line)
+			arrayKey = m[1]
+			arrayVals = nil
 
 		case reArray.MatchString(line):
 			m := reArray.FindStringSubmatch(line)
-			applyBashVar(cfg, m[1], strings.Fields(m[2]))
+			applyBashVar(cfg, m[1], unquoteBashWords(m[2]))
 
 		case reQuoted.MatchString(line):
 			m := reQuoted.FindStringSubmatch(line)

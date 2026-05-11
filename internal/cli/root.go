@@ -12,7 +12,7 @@ var appVersion string
 // global flags (persistent, available to all subcommands)
 var (
 	flagPath            string
-	flagProject         string
+	flagProject         []string
 	flagRemote          string
 	flagNoRoot          bool
 	flagParallel        bool
@@ -42,7 +42,7 @@ func newRootCmd(version string) *cobra.Command {
 	}
 
 	root.PersistentFlags().StringVarP(&flagPath, "path", "d", "", "root directory of the repository")
-	root.PersistentFlags().StringVarP(&flagProject, "project", "P", "", "resolve alias and use matching modules")
+	root.PersistentFlags().StringArrayVarP(&flagProject, "project", "P", nil, "resolve alias and use matching modules (repeatable)")
 	root.PersistentFlags().StringVarP(&flagRemote, "remote", "R", "origin", "git remote name")
 	root.PersistentFlags().BoolVar(&flagNoRoot, "no-root", false, "exclude root module from operations")
 	root.PersistentFlags().BoolVar(&flagParallel, "parallel", false, "run operations in parallel across modules")
@@ -67,11 +67,21 @@ func newRootCmd(version string) *cobra.Command {
 		newPullCmd(),
 		newPushCmd(),
 		newCommitCmd(),
+		newMergeCmd(),
 		newFeatureCmd(),
 		newHotfixCmd(),
 		newBugfixCmd(),
 		newReleaseCmd(),
 		newDoctorCmd(),
+		// new v3.0.0 features
+		newSubmoduleCmd(),
+		newWorktreeCmd(),
+		newProjectsCmd(),
+		newCdCmd(),
+		newHistoryCmd(),
+		newUndoCmd(),
+		newPRCmd(),
+		newTagCmd(),
 	)
 	root.AddCommand(completionCmd(root))
 	root.SetHelpFunc(rootHelpFunc)
@@ -79,10 +89,19 @@ func newRootCmd(version string) *cobra.Command {
 	return root
 }
 
-func rootHelpFunc(cmd *cobra.Command, _ []string) {
-	// Groups: gitflow branch ops | git plumbing | helpers/info
+func rootHelpFunc(cmd *cobra.Command, args []string) {
+	// Only render the custom grouped layout for the root command itself.
+	// Subcommands fall back to cobra's default help, which shows cmd.Long.
+	if cmd.Name() != "gflow" {
+		defaultHelpFunc(cmd, args)
+		return
+	}
+
 	gitflowCmds := []string{"feature", "hotfix", "bugfix", "release", "init"}
-	gitCmds := []string{"status", "pull", "push", "commit", "checkout"}
+	gitCmds := []string{"status", "pull", "push", "commit", "checkout", "merge"}
+	submodCmds := []string{"submodule", "worktree"}
+	projectCmds := []string{"projects", "cd"}
+	releaseCmds := []string{"pr", "tag", "history", "undo"}
 	helperCmds := []string{"list", "aliases", "config", "doctor", "version", "completion"}
 
 	byName := map[string]*cobra.Command{}
@@ -101,11 +120,44 @@ func rootHelpFunc(cmd *cobra.Command, _ []string) {
 
 	printGroup("GitFlow Branch Commands", gitflowCmds)
 	printGroup("Git Commands", gitCmds)
+	printGroup("Submodule & Worktree", submodCmds)
+	printGroup("Projects", projectCmds)
+	printGroup("Release & PR", releaseCmds)
 	printGroup("Tools & Info", helperCmds)
 
 	fmt.Println(output.HelpFlagsSection(cmd))
 	fmt.Printf("  Run %s for more information about a command.\n\n",
 		output.HelpInlineCode("gflow <command> --help"))
+}
+
+// defaultHelpFunc renders cobra's built-in help template.
+// Used for subcommands where Long descriptions + subcommand lists are shown.
+func defaultHelpFunc(cmd *cobra.Command, _ []string) {
+	long := cmd.Long
+	if long == "" {
+		long = cmd.Short
+	}
+	fmt.Println()
+	fmt.Printf("  %s\n", long)
+
+	if cmd.HasAvailableSubCommands() {
+		fmt.Printf("\nUsage:\n  %s\n\nSubcommands:\n", cmd.UseLine())
+		for _, sub := range cmd.Commands() {
+			if !sub.Hidden {
+				fmt.Printf("  %-12s %s\n", sub.Name(), sub.Short)
+			}
+		}
+	} else {
+		fmt.Printf("\nUsage:\n  %s\n", cmd.UseLine())
+	}
+
+	if cmd.HasAvailableFlags() {
+		fmt.Println("\nFlags:")
+		fmt.Print(cmd.Flags().FlagUsages())
+	}
+
+	fmt.Printf("\nRun %s for more information.\n\n",
+		output.HelpInlineCode("gflow "+cmd.Name()+" --help"))
 }
 
 func Execute(version string) error {

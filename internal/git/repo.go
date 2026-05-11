@@ -100,6 +100,13 @@ func Push(m *module.Module, remote, branch string, dryRun bool) executor.Result 
 		return executor.Result{Module: m, Action: "push", Status: executor.StatusDryRun, Output: "git " + strings.Join(args, " ")}
 	}
 	_, err := Run(context.Background(), m.Path, args...)
+	if err != nil && strings.Contains(err.Error(), "no upstream branch") {
+		trackBranch := branch
+		if trackBranch == "" {
+			trackBranch, _ = CurrentBranch(context.Background(), m.Path)
+		}
+		_, err = Run(context.Background(), m.Path, "push", "--set-upstream", remote, trackBranch)
+	}
 	if err != nil {
 		return executor.Result{Module: m, Action: "push", Status: executor.StatusError, Err: err}
 	}

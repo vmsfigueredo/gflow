@@ -62,6 +62,27 @@ add_path_alias "frontend" "web"
 	assert.Equal(t, []string{"web"}, cfg.Aliases["frontend"])
 }
 
+func TestLoadBashMultilineArray(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, ".gflow.conf", `
+# gflow configuration file
+MODULES=(
+    "central/api"
+    "hagape/api"
+    "hagape/web"
+)
+REMOTE_NAME=upstream
+add_path_alias "central" "central/api"
+add_path_alias "api" "hagape/api"
+`)
+	cfg, err := Load(dir)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"central/api", "hagape/api", "hagape/web"}, cfg.Modules)
+	assert.Equal(t, "upstream", cfg.Remote)
+	assert.Equal(t, []string{"central/api"}, cfg.Aliases["central"])
+}
+
 func TestLoadBashPhantomVarsIgnored(t *testing.T) {
 	dir := t.TempDir()
 	write(t, dir, ".gflow.conf", `

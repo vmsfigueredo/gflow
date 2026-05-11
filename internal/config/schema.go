@@ -24,6 +24,9 @@ type GitflowConfig struct {
 	ReleasePrefix    string `yaml:"release_prefix"`
 	SupportPrefix    string `yaml:"support_prefix"`
 	VersionTagPrefix string `yaml:"version_tag_prefix"`
+	// FeatureStrategy controls how develop is integrated into feature branches.
+	// Valid values: "merge" (default) | "rebase"
+	FeatureStrategy string `yaml:"feature_strategy"`
 }
 
 type SubmodConfig struct {
@@ -42,6 +45,7 @@ func defaults() Config {
 			ReleasePrefix:    "release/",
 			SupportPrefix:    "support/",
 			VersionTagPrefix: "v",
+			FeatureStrategy:  "merge",
 		},
 		Submod: SubmodConfig{
 			AutoCommit:    true,

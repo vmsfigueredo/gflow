@@ -10,6 +10,7 @@ func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
 		Short: "Check environment and configuration",
+		Long:  helpDoctor,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flagPath)
 			if err != nil {
