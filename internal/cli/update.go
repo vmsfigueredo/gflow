@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/mattn/go-isatty"
@@ -58,22 +57,6 @@ func newUpdateCmd() *cobra.Command {
 			}
 
 			output.Infof("current: %s  →  latest: %s  [via %s]", current, rel.TagName, src)
-
-			if rel.Body != "" {
-				lines := strings.Split(strings.TrimSpace(rel.Body), "\n")
-				limit := 8
-				if len(lines) < limit {
-					limit = len(lines)
-				}
-				fmt.Println()
-				for _, l := range lines[:limit] {
-					fmt.Println(" ", l)
-				}
-				if len(lines) > limit {
-					fmt.Printf("  ... (%d more lines)\n", len(lines)-limit)
-				}
-				fmt.Println()
-			}
 
 			if checkOnly {
 				return nil

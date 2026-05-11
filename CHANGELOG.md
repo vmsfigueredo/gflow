@@ -30,3 +30,8 @@
 
 ### Fixed
 - fix(develop): .gflow.conf parser now supports multi-line array syntax MODULES=(\n"a"\n"b"\n)
+- fix(main): remove `--json` from `gh pr create` (unsupported flag), fetch PR data via `gh pr view` after creation
+- fix(main): remove release body (changelog) from `gflow update` output to prevent pipe corruption on `curl | sh` installs
+
+### Changed
+- feat(main): `gflow tag list` now groups tags by major.minor, highlights latest tag

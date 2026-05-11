@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vmsfigueredo/gflow/internal/git"
@@ -30,10 +31,60 @@ func newTagListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(res.Stdout)
+			printTagList(strings.Fields(strings.TrimSpace(res.Stdout)))
 			return nil
 		},
 	}
+}
+
+func printTagList(tags []string) {
+	if len(tags) == 0 {
+		output.Infof("No tags found.")
+		return
+	}
+
+	// group by vMAJOR.MINOR
+	type group struct {
+		key  string
+		tags []string
+	}
+	var groups []group
+	index := map[string]int{}
+
+	for _, t := range tags {
+		key := minorKey(t)
+		if i, ok := index[key]; ok {
+			groups[i].tags = append(groups[i].tags, t)
+		} else {
+			index[key] = len(groups)
+			groups = append(groups, group{key: key, tags: []string{t}})
+		}
+	}
+
+	latest := tags[0]
+	fmt.Printf("\n  Latest  %s\n\n", output.HelpInlineCode(latest))
+
+	for _, g := range groups {
+		fmt.Printf("  %s\n", output.HelpInlineCode(g.key))
+		for _, t := range g.tags {
+			line := fmt.Sprintf("    %s", t)
+			if t == latest {
+				line += "  " + output.HelpUsage("← latest")
+			}
+			fmt.Println(line)
+		}
+		fmt.Println()
+	}
+}
+
+// minorKey returns "vMAJOR.MINOR" for a semver tag, or the tag itself.
+func minorKey(tag string) string {
+	s := strings.TrimPrefix(tag, "v")
+	parts := strings.SplitN(s, ".", 3)
+	if len(parts) >= 2 {
+		return "v" + parts[0] + "." + parts[1]
+	}
+	return tag
 }
 
 func newTagPushCmd() *cobra.Command {

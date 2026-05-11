@@ -33,20 +33,14 @@ func PRCreate(ctx context.Context, repoDir, title, body, base string, draft bool
 		"--title", title,
 		"--body", body,
 		"--base", base,
-		"--json", "number,url,headRefName,baseRefName",
 	}
 	if draft {
 		args = append(args, "--draft")
 	}
-	out, err := runGH(ctx, repoDir, args...)
-	if err != nil {
+	if _, err := runGH(ctx, repoDir, args...); err != nil {
 		return nil, err
 	}
-	var info PRInfo
-	if err := json.Unmarshal([]byte(out), &info); err != nil {
-		return nil, fmt.Errorf("parse gh pr create output: %w", err)
-	}
-	return &info, nil
+	return PRStatus(ctx, repoDir)
 }
 
 // PRStatus returns PR info for the current branch in repoDir.
