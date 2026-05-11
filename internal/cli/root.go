@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/vmsfigueredo/gflow/internal/git"
+	"github.com/vmsfigueredo/gflow/internal/gitflow"
 	"github.com/vmsfigueredo/gflow/internal/output"
 )
 
@@ -25,6 +27,7 @@ var (
 	flagNoAutoCommit    bool
 	flagForce           bool
 	flagStash           bool
+	flagVerbose         bool
 )
 
 func newRootCmd(version string) *cobra.Command {
@@ -35,6 +38,8 @@ func newRootCmd(version string) *cobra.Command {
 		SilenceErrors: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			output.Init(flagNoColor)
+			git.Verbose = flagVerbose
+			gitflow.Verbose = flagVerbose
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
@@ -55,6 +60,7 @@ func newRootCmd(version string) *cobra.Command {
 	root.PersistentFlags().BoolVar(&flagNoAutoCommit, "no-auto-commit", false, "skip submodule pointer auto-commit after finish")
 	root.PersistentFlags().BoolVar(&flagForce, "force", false, "bypass clean-tree guard")
 	root.PersistentFlags().BoolVar(&flagStash, "stash", false, "auto-stash dirty tree before op, pop after")
+	root.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "stream raw git output to stderr")
 
 	root.AddCommand(
 		newVersionCmd(version),
@@ -82,6 +88,7 @@ func newRootCmd(version string) *cobra.Command {
 		newUndoCmd(),
 		newPRCmd(),
 		newTagCmd(),
+		newUpdateCmd(),
 	)
 	root.AddCommand(completionCmd(root))
 	root.SetHelpFunc(rootHelpFunc)
@@ -102,7 +109,7 @@ func rootHelpFunc(cmd *cobra.Command, args []string) {
 	submodCmds := []string{"submodule", "worktree"}
 	projectCmds := []string{"projects", "cd"}
 	releaseCmds := []string{"pr", "tag", "history", "undo"}
-	helperCmds := []string{"list", "aliases", "config", "doctor", "version", "completion"}
+	helperCmds := []string{"list", "aliases", "config", "doctor", "version", "update", "completion"}
 
 	byName := map[string]*cobra.Command{}
 	for _, c := range cmd.Commands() {

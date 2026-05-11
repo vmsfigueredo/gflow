@@ -51,15 +51,36 @@ func CurrentSHA(ctx context.Context, dir string) (string, error) {
 }
 
 // Status runs git status for a module and returns an executor.Result.
+// Output includes branch name and clean/modified state, followed by the
+// short diff when the tree is dirty.
 func Status(m *module.Module, dryRun bool) executor.Result {
 	if dryRun {
 		return executor.Result{Module: m, Action: "status", Status: executor.StatusDryRun, Output: "git status --short"}
 	}
-	res, err := Run(context.Background(), m.Path, "status", "--short")
+	ctx := context.Background()
+
+	branch, err := CurrentBranch(ctx, m.Path)
 	if err != nil {
 		return executor.Result{Module: m, Action: "status", Status: executor.StatusError, Err: err}
 	}
-	return executor.Result{Module: m, Action: "status", Status: executor.StatusOK, Output: res.Stdout}
+
+	short, err := Run(ctx, m.Path, "status", "--short")
+	if err != nil {
+		return executor.Result{Module: m, Action: "status", Status: executor.StatusError, Err: err}
+	}
+
+	dirty := strings.TrimSpace(short.Stdout) != ""
+	state := "Clean"
+	if dirty {
+		state = "Modified"
+	}
+
+	out := "Branch: " + strings.TrimSpace(branch) + "\nStatus: " + state
+	if dirty {
+		out += "\n" + strings.TrimRight(short.Stdout, "\n")
+	}
+
+	return executor.Result{Module: m, Action: "status", Status: executor.StatusOK, Output: out}
 }
 
 // Checkout runs git checkout <branch> in module dir.

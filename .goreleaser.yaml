@@ -1,36 +1,57 @@
 version: 2
 
+before:
+  hooks:
+    - go mod tidy
+
 builds:
   - main: ./cmd/gflow
     binary: gflow
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
     env: [CGO_ENABLED=0]
     ldflags:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
+    # name_template must match platformAsset() in internal/update/apply.go:
+    # gflow_<version>_<os>_<arch>.tar.gz  (no leading "v", lowercase os/arch)
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
   name_template: checksums.txt
+  algorithm: sha256
 
-brews:
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+homebrew_casks:
   - repository:
       owner: vmsfigueredo
       name: homebrew-tap
     homepage: https://github.com/vmsfigueredo/gflow
     description: "Git Flow orchestrator for modular/submodule repositories"
     license: MIT
-    install: bin.install "gflow"
-    test: |
-      system "#{bin}/gflow", "version"
 
 release:
   github:
     owner: vmsfigueredo
     name: gflow
+  draft: false
+  prerelease: auto
+  name_template: "gflow {{.Version}}"

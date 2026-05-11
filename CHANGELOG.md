@@ -3,6 +3,14 @@
 ## [Unreleased]
 
 ### Added
+- feat(main): `gflow update` command with auto-detect install source (homebrew vs binary), GitHub Releases check, SHA256 verification, atomic replace
+- feat(main): `--verbose / -v` flag streaming raw git output to stderr
+- feat(main): goreleaser config with changelog, checksum sha256, windows/arm64 ignore, homebrew_casks
+
+### Changed
+- chore(main): `.goreleaser.yaml` migrated deprecated `format`/`brews` fields to `formats`/`homebrew_casks`
+- fix(main): `pull`/`push` arg parsing — single arg now sets branch, not remote
+- feat(main): `git status` output enriched with branch name and clean/modified state
 - feat(develop): complete Go rewrite of gflow with polished terminal UX
 - feat(develop): interactive module picker for flow, pull, push, checkout, status, commit commands
 - feat(develop): `feature update` subcommand integrating develop via merge or rebase

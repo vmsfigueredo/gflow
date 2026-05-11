@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 )
+
+// Verbose streams raw git stdout/stderr to os.Stderr when true.
+var Verbose bool
 
 // RunResult holds the output of a git subprocess.
 type RunResult struct {
@@ -22,8 +27,14 @@ func Run(ctx context.Context, dir string, args ...string) (RunResult, error) {
 	cmd.Dir = dir
 
 	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	if Verbose {
+		fmt.Fprintf(os.Stderr, "+ git %s (in %s)\n", strings.Join(args, " "), dir)
+		cmd.Stdout = io.MultiWriter(&stdout, os.Stderr)
+		cmd.Stderr = io.MultiWriter(&stderr, os.Stderr)
+	} else {
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+	}
 
 	err := cmd.Run()
 	res := RunResult{

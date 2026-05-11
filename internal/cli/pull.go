@@ -17,10 +17,10 @@ func newPullCmd() *cobra.Command {
 		Args:  cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			remote, branch := flagRemote, ""
-			if len(args) >= 1 {
+			if len(args) == 1 {
+				branch = args[0]
+			} else if len(args) >= 2 {
 				remote = args[0]
-			}
-			if len(args) >= 2 {
 				branch = args[1]
 			}
 			cfg, err := config.Load(flagPath)
