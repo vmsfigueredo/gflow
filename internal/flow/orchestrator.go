@@ -69,6 +69,11 @@ func Run(ctx context.Context, cfg *config.Config, mods []*module.Module, opts Op
 			name = n
 		}
 
+		// On finish, auto-update develop via fast-forward without checkout.
+		if opts.Op == "finish" && !opts.DryRun {
+			_ = git.FetchAndFastForward(ctx, m.Path, opts.Remote, "develop")
+		}
+
 		// Build and run guards with the resolved per-module name.
 		guards := buildGuardsWithName(cfg, m, opts, name)
 		if err := RunGuards(ctx, m, guards); err != nil {

@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -68,4 +69,13 @@ func IsRemoteSynced(ctx context.Context, dir, remote, branch string) (bool, erro
 		return false, err
 	}
 	return localRes.Stdout == remoteRes.Stdout, nil
+}
+
+// FetchAndFastForward fetches branch from remote and updates the local branch
+// via fast-forward without requiring a checkout. Fails if not fast-forwardable.
+func FetchAndFastForward(ctx context.Context, dir, remote, branch string) error {
+	if _, err := Run(ctx, dir, "fetch", remote, branch+":"+branch); err != nil {
+		return fmt.Errorf("fetch %s/%s: %w", remote, branch, err)
+	}
+	return nil
 }
