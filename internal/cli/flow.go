@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/spf13/cobra"
 	"github.com/vmsfigueredo/gflow/internal/config"
 	"github.com/vmsfigueredo/gflow/internal/executor"
@@ -149,6 +150,13 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 						defaults[m.Name] = positional
 					} else if namesMap != nil {
 						defaults[m.Name] = namesMap[m.Name]
+					} else if branchType == "hotfix" {
+						// Suggest next patch version based on latest tag.
+						if tag := git.LatestTag(ctx, m.Path); tag != "" {
+							if suggested := nextPatchVersion(tag); suggested != "" {
+								defaults[m.Name] = suggested
+							}
+						}
 					}
 				}
 				namesByMod, err = prompt.AskPerModuleName(branchType, picked, defaults)
@@ -301,6 +309,20 @@ func buildConfirmSummary(op, branchType string, names map[string]string, dryRun,
 		b.WriteString("  [" + strings.Join(chips, ", ") + "]")
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+// nextPatchVersion parses tag (x.y.z or vx.y.z) and returns the patch-bumped version,
+// preserving the "v" prefix if present. Returns empty string when tag is not a valid semver.
+func nextPatchVersion(tag string) string {
+	v, err := semver.NewVersion(tag)
+	if err != nil {
+		return ""
+	}
+	next := semver.New(v.Major(), v.Minor(), v.Patch()+1, "", "")
+	if strings.HasPrefix(tag, "v") {
+		return "v" + next.String()
+	}
+	return next.String()
 }
 
 func newFeatureCmd() *cobra.Command {

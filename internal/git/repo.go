@@ -134,6 +134,16 @@ func Push(m *module.Module, remote, branch string, dryRun bool) executor.Result 
 	return executor.Result{Module: m, Action: "push", Status: executor.StatusOK}
 }
 
+// LatestTag returns the most recent semver-like tag reachable from HEAD.
+// Returns empty string when no tag exists or git fails.
+func LatestTag(ctx context.Context, dir string) string {
+	res, err := Run(ctx, dir, "describe", "--tags", "--abbrev=0")
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(res.Stdout)
+}
+
 // Commit runs git commit with argv passthrough in module dir.
 func Commit(m *module.Module, args []string, dryRun bool) executor.Result {
 	full := append([]string{"commit"}, args...)

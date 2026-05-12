@@ -31,3 +31,4 @@ vendor/
 .serena/
 go-migration.md
 legacy
+local.install.sh

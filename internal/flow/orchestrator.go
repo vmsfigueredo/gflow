@@ -86,20 +86,38 @@ func Run(ctx context.Context, cfg *config.Config, mods []*module.Module, opts Op
 			}
 		}
 
-		// hotfix start: auto-stash dirty tree, sync main and develop before branching
-		if opts.BranchType == "hotfix" && opts.Op == "start" && !opts.DryRun {
-			dirty, _ := git.IsDirty(ctx, m.Path)
-			if dirty && !stashed {
-				if _, err := git.Run(ctx, m.Path, "stash", "push", "-m", "gflow-hotfix-auto-stash"); err == nil {
-					stashed = true
+		// all start ops: if already on target branch, report and skip gracefully;
+		// otherwise auto-sync base branch before branching.
+		if opts.Op == "start" && !opts.DryRun {
+			current, _ := git.CurrentBranch(ctx, m.Path)
+			target := opts.BranchType + "/" + name
+			if current == target {
+				return executor.Result{
+					Module:   m,
+					Action:   opts.Op,
+					Status:   executor.StatusOK,
+					Output:   fmt.Sprintf("module %s: already in %s branch", m.Display, target),
+					Duration: time.Since(start),
 				}
 			}
-			mainBranch, _ := git.DetectMainBranch(ctx, m.Path, opts.Remote)
-			_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
-			_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, mainBranch)
-			_, _ = git.Run(ctx, m.Path, "checkout", "develop")
-			_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, "develop")
-			_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
+			switch opts.BranchType {
+			case "feature", "bugfix", "release":
+				_, _ = git.Run(ctx, m.Path, "checkout", "develop")
+				_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, "develop")
+			case "hotfix":
+				dirty, _ := git.IsDirty(ctx, m.Path)
+				if dirty && !stashed {
+					if _, err := git.Run(ctx, m.Path, "stash", "push", "-m", "gflow-hotfix-auto-stash"); err == nil {
+						stashed = true
+					}
+				}
+				mainBranch, _ := git.DetectMainBranch(ctx, m.Path, opts.Remote)
+				_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
+				_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, mainBranch)
+				_, _ = git.Run(ctx, m.Path, "checkout", "develop")
+				_, _ = git.Run(ctx, m.Path, "pull", opts.Remote, "develop")
+				_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
+			}
 		}
 
 		out, err := gitflow.RunOpFn(ctx, variant, cfg, m, opts.BranchType, opts.Op, name, opts.TagMessage, opts.DryRun)
@@ -136,14 +154,7 @@ func buildGuardsWithName(cfg *config.Config, m *module.Module, opts Options, nam
 		guards = append(guards, CleanTreeGuard{Force: opts.Force, Stash: opts.Stash})
 	}
 
-	// base branch guard for start
-	if opts.Op == "start" {
-		switch opts.BranchType {
-		case "feature", "bugfix", "release":
-			guards = append(guards, OnExpectedBranchGuard{Expected: "develop"})
-		// hotfix: no branch guard — orchestrator handles checkout+pull automatically
-		}
-	}
+	// no base branch guard for start — orchestrator auto-checkouts develop and pulls before branching
 
 	// remote sync guard before finish
 	if opts.Op == "finish" {

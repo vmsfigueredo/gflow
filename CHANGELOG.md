@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-05-12
+
+### Added
+- feat(main): hotfix start suggests next patch version (from latest tag) as interactive default
+- feat(main): all branch start ops auto-sync base branch before branching (not only hotfix)
+- feat(main): graceful skip when already on target branch during start
+- feat(main): `git.LatestTag` helper using `git describe --tags --abbrev=0`
+
+### Changed
+- refactor(main): remove `OnExpectedBranchGuard` for start — orchestrator handles checkout+pull
+- refactor(main): unify base-branch sync logic for feature, bugfix, release, and hotfix start
+
 ## [1.0.9] - 2026-05-12
 
 ### Fixed
