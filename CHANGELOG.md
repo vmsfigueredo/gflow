@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-05-12
+
 ### Fixed
 - fix(main): release and hotfix finish no longer hang waiting for editor — inject `-m` tag message flag automatically
 
