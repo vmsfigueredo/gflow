@@ -37,7 +37,7 @@ func TestRunNamesByModule_SkipsAbsentModules(t *testing.T) {
 	var called []string
 	orig := gitflow.RunOpFn
 	t.Cleanup(func() { gitflow.RunOpFn = orig })
-	gitflow.RunOpFn = func(_ context.Context, _ gitflow.Variant, _ *config.Config, m *module.Module, _, _, name string, _ bool) (string, error) {
+	gitflow.RunOpFn = func(_ context.Context, _ gitflow.Variant, _ *config.Config, m *module.Module, _, _, name, _ string, _ bool) (string, error) {
 		called = append(called, m.Name+"="+name)
 		return "", nil
 	}
@@ -73,7 +73,7 @@ func TestRunSingleName_AllModulesRun(t *testing.T) {
 	var called []string
 	orig := gitflow.RunOpFn
 	t.Cleanup(func() { gitflow.RunOpFn = orig })
-	gitflow.RunOpFn = func(_ context.Context, _ gitflow.Variant, _ *config.Config, m *module.Module, _, _, name string, _ bool) (string, error) {
+	gitflow.RunOpFn = func(_ context.Context, _ gitflow.Variant, _ *config.Config, m *module.Module, _, _, name, _ string, _ bool) (string, error) {
 		called = append(called, m.Name)
 		return "", nil
 	}

@@ -15,18 +15,31 @@ var RunOpFn = RunOp
 // RunOp dispatches a git-flow operation for one module.
 // Passes real FinishOptions from config on finish.
 func RunOp(ctx context.Context, variant Variant, cfg *config.Config, m *module.Module,
-	branchType, op, name string, dryRun bool) (string, error) {
+	branchType, op, name, tagMessage string, dryRun bool) (string, error) {
 
 	if dryRun {
 		return "git flow " + branchType + " " + op + " " + name, nil
 	}
 
-	args := buildArgs(variant, cfg, branchType, op, name)
+	args := buildArgs(variant, cfg, branchType, op, name, tagMessage)
 	return runGitFlow(ctx, m.Path, args...)
 }
 
-func buildArgs(variant Variant, cfg *config.Config, branchType, op, name string) []string {
-	args := []string{branchType, op, name}
+func buildArgs(variant Variant, cfg *config.Config, branchType, op, name, tagMessage string) []string {
+	args := []string{branchType, op}
+
+	if op == "finish" && (branchType == "release" || branchType == "hotfix") {
+		msg := tagMessage
+		if msg == "" {
+			switch branchType {
+			case "release":
+				msg = "Release " + name
+			case "hotfix":
+				msg = "Hotfix " + name
+			}
+		}
+		args = append(args, "-m", msg)
+	}
 
 	if op == "finish" && cfg.Gitflow.FinishOptions != "" {
 		opts := strings.Fields(cfg.Gitflow.FinishOptions)
@@ -41,5 +54,6 @@ func buildArgs(variant Variant, cfg *config.Config, branchType, op, name string)
 		}
 	}
 
+	args = append(args, name)
 	return args
 }

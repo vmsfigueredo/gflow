@@ -148,6 +148,34 @@ func AskPerModuleName(branchType string, mods []*module.Module, defaults map[str
 	return result, nil
 }
 
+// AskTagMessage prompts for an annotated tag message for release finish.
+// def is the default message shown as placeholder.
+func AskTagMessage(version, def string) (string, error) {
+	if !IsInteractive() {
+		return "", ErrNotTTY
+	}
+	var msg string
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title(fmt.Sprintf("Tag message for release %s:", version)).
+				Description("Leave empty to use default.").
+				Placeholder(def).
+				Value(&msg),
+		),
+	)
+	if err := form.Run(); err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			return "", ErrAborted
+		}
+		return "", err
+	}
+	if strings.TrimSpace(msg) == "" {
+		return def, nil
+	}
+	return strings.TrimSpace(msg), nil
+}
+
 // PickBranch shows a single-select of branch names and returns the chosen one.
 // def is the branch to pre-select (cursor); ignored if not in the list.
 func PickBranch(title string, branches []string, def string) (string, error) {

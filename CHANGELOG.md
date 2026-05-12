@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+- fix(main): release and hotfix finish no longer hang waiting for editor — inject `-m` tag message flag automatically
+
+### Added
+- feat(main): `--tag-message / -m` flag on `release finish` and `hotfix finish` for custom annotated tag message
+- feat(main): interactive tag message prompt for `release finish` and `hotfix finish` in TTY mode
+
 ## [1.0.7] - 2026-05-11
 
 ### Added

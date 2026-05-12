@@ -32,6 +32,7 @@ type Options struct {
 	Force         bool
 	Stash         bool
 	NoAutoCommit  bool
+	TagMessage    string
 }
 
 // Run orchestrates guards → git-flow op → SubmodulePointerSync for each module.
@@ -101,7 +102,7 @@ func Run(ctx context.Context, cfg *config.Config, mods []*module.Module, opts Op
 			_, _ = git.Run(ctx, m.Path, "checkout", mainBranch)
 		}
 
-		out, err := gitflow.RunOpFn(ctx, variant, cfg, m, opts.BranchType, opts.Op, name, opts.DryRun)
+		out, err := gitflow.RunOpFn(ctx, variant, cfg, m, opts.BranchType, opts.Op, name, opts.TagMessage, opts.DryRun)
 
 		if stashed {
 			_, _ = git.Run(ctx, m.Path, "stash", "pop")

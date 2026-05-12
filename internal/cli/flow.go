@@ -50,7 +50,7 @@ func newFlowTypeCmd(branchType string) *cobra.Command {
 }
 
 func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.PositionalArgs) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   op + " " + argUsage,
 		Short: op + " a " + branchType + " branch across all modules",
 		Args:  argsValidator,
@@ -58,6 +58,7 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 			// Resolve flags (inherited from parent).
 			iFlag, _ := cmd.Flags().GetBool("interactive")
 			namesStr, _ := cmd.Flags().GetString("names")
+			tagMsg, _ := cmd.Flags().GetString("tag-message")
 
 			cfg, err := config.Load(flagPath)
 			if err != nil {
@@ -91,6 +92,7 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 				Force:        flagForce,
 				Stash:        flagStash,
 				NoAutoCommit: flagNoAutoCommit,
+				TagMessage:   tagMsg,
 			}
 
 			if !needInteractive {
@@ -196,7 +198,26 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 				return nil
 			}
 
-			// Step 3: confirm.
+			// Step 3: for release/hotfix finish, ask for tag message.
+			if (branchType == "release" || branchType == "hotfix") && op == "finish" && opts.TagMessage == "" {
+				// Pick a representative version from resolved names.
+				version := ""
+				for _, v := range namesByMod {
+					version = v
+					break
+				}
+				defaultMsg := strings.ToUpper(branchType[:1]) + branchType[1:] + " " + version
+				msg, err := prompt.AskTagMessage(version, defaultMsg)
+				if err != nil {
+					if errors.Is(err, prompt.ErrAborted) {
+						return nil
+					}
+					return err
+				}
+				opts.TagMessage = msg
+			}
+
+			// Step 4: confirm.
 			summary := buildConfirmSummary(op, branchType, namesByMod, flagDryRun, flagParallel || cfg.Parallel)
 			ok, err := prompt.ConfirmSummary(summary)
 			if err != nil || !ok {
@@ -207,7 +228,7 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 				return nil
 			}
 
-			// Step 4: run.
+			// Step 5: run.
 			opts.NamesByModule = namesByMod
 			output.PrintHeader(branchType+" "+op, "", len(namesByMod), output.HeaderFlags{
 				Parallel: flagParallel || cfg.Parallel,
@@ -220,6 +241,10 @@ func newFlowOpCmd(branchType, op, argUsage string, argsValidator cobra.Positiona
 			return output.Print(results, flagJSON)
 		},
 	}
+	if op == "finish" && (branchType == "release" || branchType == "hotfix") {
+		cmd.Flags().StringP("tag-message", "m", "", "annotated tag message for the tag created on finish")
+	}
+	return cmd
 }
 
 // parseNamesFlag parses "api=v1.2.3,web=v1.4.0" into a map.
