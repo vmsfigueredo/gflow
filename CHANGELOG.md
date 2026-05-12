@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-05-12
+
 ### Added
 - feat(main): auto fast-forward develop before finish without checkout
 
