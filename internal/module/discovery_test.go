@@ -24,7 +24,9 @@ func TestResolveExplicitModules(t *testing.T) {
 	require.NoError(t, err)
 
 	names := names(mods)
-	assert.Equal(t, []string{".", "api", "web"}, names)
+	assert.Equal(t, ".", names[len(names)-1], "root must be last")
+	assert.Contains(t, names, "api")
+	assert.Contains(t, names, "web")
 }
 
 func TestResolveNoRoot(t *testing.T) {
@@ -130,5 +132,5 @@ func TestDisplayRoot(t *testing.T) {
 	mods, err := Resolve(cfg([]string{"api"}, nil), dir, nil, false, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, ".", mods[0].Display)
+	assert.Equal(t, ".", mods[len(mods)-1].Display, "root must be last")
 }

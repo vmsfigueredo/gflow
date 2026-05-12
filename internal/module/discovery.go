@@ -58,11 +58,6 @@ func Resolve(cfg *config.Config, root string, projects []string, noRoot bool, ex
 
 	aliasIdx := buildAliasIndex(cfg.Aliases)
 
-	// include root unless excluded
-	if !noRootEffective {
-		mods = append(mods, &Module{Name: ".", Display: ".", Path: root, Root: true})
-	}
-
 	for _, p := range paths {
 		abs := p
 		if !filepath.IsAbs(p) {
@@ -70,6 +65,11 @@ func Resolve(cfg *config.Config, root string, projects []string, noRoot bool, ex
 		}
 		name := filepath.Base(p)
 		mods = append(mods, &Module{Name: name, Display: displayFor(p, aliasIdx), Path: abs})
+	}
+
+	// Root appended last: submodules must complete before the superproject is processed.
+	if !noRootEffective {
+		mods = append(mods, &Module{Name: ".", Display: ".", Path: root, Root: true})
 	}
 
 	if len(except) > 0 {

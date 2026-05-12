@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- fix(main): root module now runs last so submodules complete before superproject is processed
+
 ## [1.0.8] - 2026-05-12
 
 ### Fixed
